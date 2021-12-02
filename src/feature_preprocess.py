@@ -10,7 +10,14 @@ def impute_column(data, column):
     mode_ = mode_.rename(columns={column: f"{column}_imputed"})
     mode_[f"{column}_imputed"] = mode_[f"{column}_imputed"].astype(str).replace({"[]": np.nan})
 
-    data = data[['index', column, 'bundle']].merge(mode_, on='bundle').sort_values('index')
+    data = data[['index', column, 'bundle']].merge(mode_, on='bundle', how='left').sort_values('index').reset_index(drop=True)
+
+    return data[column].combine_first(data[f"{column}_imputed"])
+
+
+def impute_column_test(data, column, mode_):
+
+    data = data[['index', column, 'bundle']].merge(mode_, on='bundle', how='left').sort_values('index').reset_index(drop=True)
 
     return data[column].combine_first(data[f"{column}_imputed"])
 
