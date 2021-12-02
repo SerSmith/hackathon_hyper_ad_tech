@@ -44,3 +44,20 @@ def bundle_preprocess(data, quantity_words_flag=True, bundles_bow_flag=True, bun
 
     # return bundles, bundles_parts_bow_features, bundles_bow_features
     return bundles
+
+
+def make_features_from_cities(df, path_cities):
+    df_cities = pd.read_csv(path_cities)
+    df_cities = df_cities.groupby(['region','settlement']).agg({'population':'sum', 'children':'sum', 'type': 'max', 'latitude_dd':'max','longitude_dd':'max'}).reset_index()
+    df['city'] = df['city'].str.lower()
+    df['oblast'] = df['oblast'].str.lower()
+    df_cities['region'] = df_cities['region'].str.lower()
+    df_cities['settlement'] = df_cities['settlement'].str.lower()
+    df = pd.merge(df, df_cities, left_on = ['oblast','city'], right_on=['region','settlement'], how='left')
+    df.drop(['region','settlement'], axis=1, inplace = True)
+
+    # add timezone
+    df.loc[df[df['shift'].isnull()==False].index,'timezone'] = df[df['shift'].isnull()==False]['shift'].astype(str).apply(lambda x: x[3:5])
+    df['timezone'] = df['timezone'].replace('', 0)
+    df.loc[df[df['shift'].isnull()==False].index, 'timezone'] = df.loc[df[df['shift'].isnull()==False].index, 'timezone'].astype('int')
+    return df 
