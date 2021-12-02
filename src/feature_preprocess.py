@@ -1,6 +1,20 @@
 from sklearn.feature_extraction.text import CountVectorizer
 import pandas as pd
 
+def impute_column(data, column):
+
+    data = data.copy()
+    data = data.reset_index()
+
+    mode_ = data[[column,	'bundle']].groupby('bundle').agg(pd.Series.mode).reset_index()
+    mode_ = mode_.rename(columns={column: f"{column}_imputed"})
+    mode_[f"{column}_imputed"] = mode_[f"{column}_imputed"].astype(str).replace({"[]": np.nan})
+
+    data = data[['index', column, 'bundle']].merge(mode_, on='bundle').sort_values('index')
+
+    return data[column].combine_first(data[f"{column}_imputed"])
+
+
 def bow(tokenizer, text):
     print(text.shape)
     vectorizer = CountVectorizer(tokenizer=tokenizer, binary=True, lowercase=True, min_df=10)
