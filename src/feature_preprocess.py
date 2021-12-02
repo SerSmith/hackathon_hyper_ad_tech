@@ -1,5 +1,6 @@
 from sklearn.feature_extraction.text import CountVectorizer
 import pandas as pd
+import numpy as np
 
 def impute_column(data, column):
 
@@ -12,7 +13,7 @@ def impute_column(data, column):
 
     data = data[['index', column, 'bundle']].merge(mode_, on='bundle', how='left').sort_values('index').reset_index(drop=True)
 
-    return data[column].combine_first(data[f"{column}_imputed"])
+    return data[column].combine_first(data[f"{column}_imputed"]), mode_
 
 
 def impute_column_test(data, column, mode_):
@@ -22,19 +23,19 @@ def impute_column_test(data, column, mode_):
     return data[column].combine_first(data[f"{column}_imputed"])
 
 
-def bow(tokenizer, text):
+def bow(tokenizer, text, bow_make_binary):
     print(text.shape)
-    vectorizer = CountVectorizer(tokenizer=tokenizer, binary=True, lowercase=True, min_df=10)
+    vectorizer = CountVectorizer(tokenizer=tokenizer, binary=bow_make_binary, lowercase=True, min_df=10)
     X = vectorizer.fit_transform(text.astype(str))
-    bow = pd.DataFrame(X.todense(), columns=list(vectorizer.vocabulary_.keys()))
+    bow = pd.DataFrame(X.todense(), columns=vectorizer.get_feature_names_out())
     return bow
 
 
-def bundle_preprocess(data, quantity_words_flag=True, bundles_bow_flag=True, bundles_parts_bow_flag=True):
+def bundle_preprocess(data, quantity_words_flag=True, bundles_bow_flag=True, bundles_parts_bow_flag=True, bow_make_binary=True):
     bundles = pd.DataFrame(data['bundle'].drop_duplicates().reset_index(drop=True), columns=['bundle'])
 
     if bundles_parts_bow_flag:
-        bundles_parts_bow_features = bow(lambda x: x.split('.'), bundles['bundle'])   
+        bundles_parts_bow_features = bow(lambda x: x.split('.'), bundles['bundle'], bow_make_binary)   
         bundles = pd.concat([bundles, bundles_parts_bow_features], axis=1)
         print('bundles_parts_bow_flag ready')
 
@@ -55,7 +56,7 @@ def bundle_preprocess(data, quantity_words_flag=True, bundles_bow_flag=True, bun
 
 def make_features_from_cities(df, path_cities):
     df_cities = pd.read_csv(path_cities)
-    df_cities = df_cities.groupby(['region','settlement']).agg({'population':'sum', 'children':'sum', 'type': 'max', 'latitude_dd':'max','longitude_dd':'max'}).reset_index()
+    df_cities = df_cities.groupby(['region', 'settlement']).agg({'population':'sum', 'children':'sum', 'type': 'max', 'latitude_dd':'max','longitude_dd':'max'}).reset_index()
     df['city'] = df['city'].str.lower()
     df['oblast'] = df['oblast'].str.lower()
     df_cities['region'] = df_cities['region'].str.lower()
