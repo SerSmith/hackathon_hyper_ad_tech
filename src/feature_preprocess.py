@@ -19,7 +19,7 @@ def bundle_preprocess(data, quantity_words_flag=True, bundles_bow_flag=True, bun
 
 
     if bundles_bow_flag:
-        bundles_bow_features = bow(lambda x: x, bundles['bundle'])
+        bundles_bow_features = pd.get_dummies(bundles['bundle'])
         bundles = pd.concat([bundles, bundles_bow_features], axis=1)
         print('bundles_bow_flag ready')
     
