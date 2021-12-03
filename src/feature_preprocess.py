@@ -62,22 +62,22 @@ def make_features_from_cities(df, path_cities):
     df_cities['region'] = df_cities['region'].str.lower()
     df_cities['settlement'] = df_cities['settlement'].str.lower()
     df = pd.merge(df, df_cities, left_on = ['oblast','city'], right_on=['region','settlement'], how='left')
-    df.drop(['region','settlement'], axis=1, inplace = True)
+    df.drop(['region', 'settlement'], axis=1, inplace = True)
 
     # add timezone
-    df.loc[df[df['shift'].isnull()==False].index,'timezone'] = df[df['shift'].isnull()==False]['shift'].astype(str).apply(lambda x: x[3:5])
+    df.loc[df[df['shift'].isnull() == False].index,'timezone'] = df[df['shift'].isnull() == False]['shift'].astype(str).apply(lambda x: x[3:5])
     df['timezone'] = df['timezone'].replace('', 0)
-    df.loc[df[df['shift'].isnull()==False].index, 'timezone'] = df.loc[df[df['shift'].isnull()==False].index, 'timezone'].astype('int')
+    df.loc[df[df['shift'].isnull() == False].index, 'timezone'] = df.loc[df[df['shift'].isnull() == False].index, 'timezone'].astype('int')
     return df 
 
 
 def make_features_from_time(df,
                             dt_target='loc',
                             datetime_col_msk='created',
-                            shift_col = 'shift',
+                            shift_col='shift',
                             fill_shift_na=False,
                             shift_filler='MSK',
-                            dt_format = '%Y-%m-%d %H:%M:%S'
+                            dt_format='%Y-%m-%d %H:%M:%S'
                             ):
     """Создание фич из колонки created
 
@@ -204,12 +204,12 @@ def get_tags_from_time_features(df, tags_cols=None, tags_dict=None):
 
     if tags_cols is None:
         tags_cols = [
-            'month',
+            # 'month',
             'weekday',
             'is_weekend',
             'is_academic_year',
-            'is_first_september',
-            'is_week_before_first_september',
+            # 'is_first_september',
+            # 'is_week_before_first_september',
             'is_early_morning',
             'is_morning',
             'is_day',
