@@ -66,22 +66,22 @@ def make_features_from_cities(df, path_cities):
     df_cities['region'] = df_cities['region'].str.lower()
     df_cities['settlement'] = df_cities['settlement'].str.lower()
     df = pd.merge(df, df_cities, left_on = ['oblast','city'], right_on=['region','settlement'], how='left')
-    df.drop(['region','settlement'], axis=1, inplace = True)
+    df.drop(['region', 'settlement'], axis=1, inplace = True)
 
     # add timezone
-    df.loc[df[df['shift'].isnull()==False].index,'timezone'] = df[df['shift'].isnull()==False]['shift'].astype(str).apply(lambda x: x[3:5])
+    df.loc[df[df['shift'].isnull() == False].index, 'timezone'] = df[df['shift'].isnull() == False]['shift'].astype(str).apply(lambda x: x[3:5])
     df['timezone'] = df['timezone'].replace('', 0)
-    df.loc[df[df['shift'].isnull()==False].index, 'timezone'] = df.loc[df[df['shift'].isnull()==False].index, 'timezone'].astype('int')
+    df.loc[df[df['shift'].isnull() == False].index, 'timezone'] = df.loc[df[df['shift'].isnull() == False].index, 'timezone'].astype('int')
     return df 
 
 
 def make_features_from_time(df,
                             dt_target='loc',
                             datetime_col_msk='created',
-                            shift_col = 'shift',
+                            shift_col='shift',
                             fill_shift_na=False,
                             shift_filler='MSK',
-                            dt_format = '%Y-%m-%d %H:%M:%S'
+                            dt_format='%Y-%m-%d %H:%M:%S'
                             ):
     """Создание фич из колонки created
 
@@ -208,12 +208,12 @@ def get_tags_from_time_features(df, tags_cols=None, tags_dict=None):
 
     if tags_cols is None:
         tags_cols = [
-            'month',
+            # 'month',
             'weekday',
             'is_weekend',
             'is_academic_year',
-            'is_first_september',
-            'is_week_before_first_september',
+            # 'is_first_september',
+            # 'is_week_before_first_september',
             'is_early_morning',
             'is_morning',
             'is_day',
@@ -273,3 +273,60 @@ def get_tags_from_time_features(df, tags_cols=None, tags_dict=None):
     tags_df.columns = [col + '_tag' for col in tags_df.columns]
 
     return tags_df
+
+
+def get_size_city(row):
+    if pd.isnull(row['population']):
+        return 'unknown city'
+    if row['population'] > 5000000:
+        size = 'very big city'
+    elif row['population'] > 1000000:
+        size = 'big city'
+    elif row['population'] > 60000:
+        size = 'medium city'
+    elif row['population'] <= 60000:
+        size = 'small city'
+    return size
+
+
+def get_tags_from_cities_features(df):
+    """
+    Создает теги из фич, сгенерированных из городов и часового пояса
+    """
+    df = df.copy()
+    df['type_city'] = df['type']
+    df['size_city'] = df.apply(get_size_city, axis=1)
+    tags_df = df[['type_city', 'size_city', 'timezone']]
+    return tags_df
+
+def get_version_float(x):
+    x_list = str(x).split('.')
+    
+    try:
+        if len(x_list) >=2:
+            out = int(x_list[0]) + 0.01 *int(x_list[1])
+        else:
+            out = int(x_list[0])
+    except ValueError:
+        out = -10
+    return out
+
+
+def phone_tags(data):
+    out = data[['os']]
+    out['os'] = out['os'].str.upper()
+    out['osv_num'] = data['osv'].astype(str).apply(get_version_float)
+    out['new_phone'] = np.nan
+
+    out.loc[(out['os'] == 'ANDROID') & (out['osv_num'] >= 9), 'new_phone'] = 'new_phone'
+    out.loc[((out['os'] == 'IOS') & (out['osv_num'] >= 10.03)), 'new_phone'] = 'new_phone'
+
+    out.loc[((out['os'] == 'ANDROID') & (out['osv_num'] < 9)) & ((out['os'] == 'ANDROID') & (out['osv_num'] >= 7)), 'new_phone'] = 'medium_phone'
+    out.loc[((out['os'] == 'IOS') & (out['osv_num'] < 10.03)) & ((out['os'] == 'ANDROID') & (out['osv_num'] >= 10)), 'new_phone'] = 'medium_phone'
+
+    out.loc[((out['os'] == 'ANDROID') & (out['osv_num'] < 7) ), 'new_phone'] = 'old_phone'
+    out.loc[((out['os'] == 'IOS') & (out['osv_num'] < 10)), 'new_phone'] = 'old_phone'
+
+    out = out.drop(columns=['osv_num'])
+    out = out.rename(columns={'os': 'os_'})
+    return out
