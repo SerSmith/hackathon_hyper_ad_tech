@@ -269,3 +269,28 @@ def get_tags_from_time_features(df, tags_cols=None, tags_dict=None):
     tags_df.columns = [col + '_tag' for col in tags_df.columns]
 
     return tags_df
+
+
+def get_size_city(row):
+    if pd.isnull(row['population']):
+        return 'unknown city'
+    if row['population']>5000000:
+        size='very big city'
+    elif row['population']>1000000:
+        size='big city'
+    elif row['population']>60000:
+        size='medium city'
+    elif row['population']<=60000:
+        size='small city'
+    return size
+
+
+def get_tags_from_cities_features(df):
+    """
+    Создает теги из фич, сгенерированных из городов и часового пояса
+    """
+    df = df.copy()
+    df['type_city'] = df['type']
+    df['size_city'] = df.apply(get_size_city, axis=1)
+    tags_df = df[['type_city', 'size_city', 'timezone']]
+    return  tags_df
