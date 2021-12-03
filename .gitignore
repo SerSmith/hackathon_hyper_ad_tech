@@ -89,6 +89,11 @@ python_boilerplate/
 # large file
 data/train.csv
 data/test.csv
+data/train_raw_cities_time_ftrs.csv
+
+
+data/test_prepared.csv
+data/train_prepared.csv
 
 #xlsx cash
 *.xlsx#

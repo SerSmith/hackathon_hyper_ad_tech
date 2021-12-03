@@ -2,10 +2,13 @@ from sklearn.feature_extraction.text import CountVectorizer
 import pandas as pd
 import numpy as np
 
-def impute_column(data, column):
+def impute_column(data, column, data_test=None):
 
     data = data.copy()
     data = data.reset_index()
+
+    if data_test is not None:
+        data = data.append(data_test)
 
     mode_ = data[[column,	'bundle']].groupby('bundle').agg(pd.Series.mode).reset_index()
     mode_ = mode_.rename(columns={column: f"{column}_imputed"})
@@ -17,7 +20,8 @@ def impute_column(data, column):
 
 
 def impute_column_test(data, column, mode_):
-
+    data = data.copy()
+    data = data.reset_index()
     data = data[['index', column, 'bundle']].merge(mode_, on='bundle', how='left').sort_values('index').reset_index(drop=True)
 
     return data[column].combine_first(data[f"{column}_imputed"])
