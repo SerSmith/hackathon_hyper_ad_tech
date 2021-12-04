@@ -330,3 +330,11 @@ def phone_tags(data):
     out = out.drop(columns=['osv_num'])
     out = out.rename(columns={'os': 'os_'})
     return out
+
+def create_description(data, tags_list):
+    out = data[tags_list[0]]
+    for column in tags_list[1: ]:
+        print(column)
+        print(out.shape)
+        out = out.astype(str) + '.tag: '+ data[column].astype(str) +  f' tag_t: {column}'
+    return out
